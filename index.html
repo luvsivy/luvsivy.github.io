@@ -1,0 +1,891 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>yz</title>
+  <link rel="icon" href="https://files.catbox.moe/u31zqx.png" type="image/png">
+  <link rel="stylesheet" href="https://unpkg.com/aos@2.3.1/dist/aos.css">
+  <meta name="description" content="blue balls blue balls">
+  <meta property="og:title" content="yz">
+  <meta property="og:description" content="blue balls blue balls">
+  <meta property="og:type" content="website">
+  <meta property="og:image" content="https://files.catbox.moe/u31zqx.png">
+  <meta name="theme-color" content="#cba6f7">
+  <style>
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+  
+@font-face {
+    font-family: 'Chillax Semibold';
+    src: url("Chillax-Semibold.otf");
+}
+
+:root {
+    --ctp-base: #1e1e2e;
+    --ctp-mantle: #181825;
+    --ctp-crust: #11111b;
+    --ctp-text: #cdd6f4;
+    --ctp-subtext1: #bac2de;
+    --ctp-subtext0: #a6adc8;
+    --ctp-overlay2: #9399b2;
+    --ctp-overlay1: #7f849c;
+    --ctp-overlay0: #6c7086;
+    --ctp-surface2: #585b70;
+    --ctp-surface1: #45475a;
+    --ctp-surface0: #313244;
+    --ctp-blue: #89b4fa;
+    --ctp-lavender: #b4befe;
+    --ctp-sapphire: #74c7ec;
+    --ctp-sky: #89dceb;
+    --ctp-teal: #94e2d5;
+    --ctp-green: #a6e3a1;
+    --ctp-yellow: #f9e2af;
+    --ctp-peach: #fab387;
+    --ctp-maroon: #eba0ac;
+    --ctp-red: #f38ba8;
+    --ctp-mauve: #cba6f7;
+    --ctp-pink: #f5c2e7;
+    --ctp-flamingo: #f2cdcd;
+    --ctp-rosewater: #f5e0dc;
+}
+  
+body {
+    background-color: var(--ctp-base);
+    position: relative;
+    overflow-x: hidden;
+}
+
+#gridCanvas {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: -2;
+    pointer-events: none;
+}
+
+body::after {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.3);
+    z-index: -1;
+    pointer-events: none;
+}
+  
+#snowCanvas {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 0;
+    pointer-events: none;
+}
+  
+.container {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    gap: 20px;
+    z-index: 1;
+    position: relative;
+    padding: 20px;
+    padding-bottom: 80px;
+}
+  
+.header {
+    text-align: center;
+    margin-bottom: 20px;
+    cursor: pointer;
+}
+
+  
+h1 {
+    font-family: 'Chillax Semibold', sans-serif;
+    font-size: 48px;
+    color: var(--ctp-text);
+    text-shadow: 0 0 8px var(--ctp-lavender), 0 0 16px var(--ctp-surface2);
+    padding: 10px 20px;
+    display: inline-block;
+    background-color: rgba(49, 50, 68, 0.8);
+    border-radius: 12px;
+    border: 2px solid var(--ctp-surface2);
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.4);
+    position: relative;
+    transition: transform 0.3s ease-in-out, filter 0.3s ease-in-out;
+}
+
+h1:hover {
+    transform: scale(1.02);
+    filter: brightness(1.1);
+}
+  
+h1::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    border-radius: 12px;
+    z-index: -1;
+    pointer-events: none;
+}
+
+.messaging-apps {
+    display: flex;
+    gap: 15px;
+    margin-bottom: 10px;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+.messaging-app {
+    width: 50px;
+    height: 50px;
+    background-color: var(--ctp-surface0);
+    border: 2px solid var(--ctp-surface2);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none;
+    color: var(--ctp-text);
+    font-size: 24px;
+    transition: all 0.4s cubic-bezier(0.4, 0.0, 0.2, 1);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+    position: relative;
+    overflow: hidden;
+    cursor: pointer;
+}
+
+.messaging-app .icon {
+    width: 28px;
+    height: 28px;
+    object-fit: contain;
+    transition: transform 0.4s cubic-bezier(0.4, 0.0, 0.2, 1);
+    z-index: 2;
+}
+
+.messaging-app .label {
+    position: absolute;
+    right: 15px;
+    font-family: 'Chillax Semibold', sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--ctp-text);
+    opacity: 0;
+    transform: translateX(10px);
+    transition: all 0.4s cubic-bezier(0.4, 0.0, 0.2, 1);
+    z-index: 2;
+    white-space: nowrap;
+}
+
+.messaging-app:hover {
+    width: 150px;
+    transform: translateX(-10px);
+    filter: drop-shadow(0 0 8px var(--ctp-surface2));
+}
+
+.messaging-app:hover .icon {
+    transform: translateX(-35px);
+}
+
+.messaging-app:hover .label {
+    opacity: 1;
+    transform: translateX(0);
+}
+
+.messaging-app::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.4);
+    border-radius: 12px;
+    z-index: 1;
+    pointer-events: none;
+}
+
+.session-copied {
+    position: fixed;
+    bottom: 30px;
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: var(--ctp-surface0);
+    color: var(--ctp-text);
+    padding: 15px 25px;
+    border-radius: 12px;
+    border: 2px solid var(--ctp-surface2);
+    font-family: 'Chillax Semibold', sans-serif;
+    font-size: 16px;
+    z-index: 10001;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.4);
+}
+
+.session-copied.show {
+    opacity: 1;
+}
+
+.bottom-text {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    text-align: center;
+    z-index: 10;
+    width: calc(100% - 20px);
+    max-width: 600px;
+}
+
+.bottom-text p {
+    color: var(--ctp-text);
+    font-family: 'Chillax Semibold', sans-serif;
+    font-size: 16px;
+    margin: 0;
+    opacity: 0.9;
+    font-style: italic;
+    position: relative;
+    cursor: default;
+    padding: 0 10px;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+}
+
+.tooltip {
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: var(--ctp-surface0);
+    color: var(--ctp-text);
+    padding: 8px 12px;
+    border-radius: 8px;
+    border: 1px solid var(--ctp-surface2);
+    font-size: 14px;
+    white-space: nowrap;
+    z-index: 1000;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+    margin-bottom: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+}
+
+.bottom-text:hover .tooltip {
+    opacity: 1;
+}
+  
+.buttons {
+    display: flex;
+    gap: 20px;
+    align-items: center;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+  
+.box {
+    position: relative;
+    animation: fadeIn 1.5s;
+    width: 280px;
+    height: 140px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    text-shadow: 0 0 6px var(--ctp-lavender);
+    text-decoration: none;
+    color: var(--ctp-text);
+    font-size: 24px;
+    border: 2px solid var(--ctp-surface2);
+    background-color: var(--ctp-surface0);
+    padding: 20px;
+    border-radius: 16px;
+    transition: transform 0.3s ease-in-out, filter 0.3s ease-in-out;
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.4);
+    font-family: 'Chillax Semibold';
+    font-weight: bold;
+    overflow: hidden;
+    text-align: center;
+    line-height: 1.2;
+}
+
+.box::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.4);
+    border-radius: 16px;
+    z-index: 0;
+    pointer-events: none;
+}
+  
+.box:hover {
+    transform: scale(1.05);
+    box-shadow: 0 16px 32px rgba(0, 0, 0, 0.5);
+    filter: drop-shadow(0 0 10px var(--ctp-surface2));
+}
+  
+.box * {
+    position: relative;
+    z-index: 1;
+}
+
+.video-modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.9);
+    z-index: 9999;
+    justify-content: center;
+    align-items: center;
+}
+
+.video-modal.active {
+    display: flex;
+}
+
+.video-modal video {
+    width: 100vw;
+    height: 100vh;
+    object-fit: cover;
+    border-radius: 0;
+}
+
+.close-video {
+    position: absolute;
+    top: 20px;
+    right: 30px;
+    font-size: 48px;
+    color: var(--ctp-text);
+    cursor: pointer;
+    z-index: 10000;
+    transition: color 0.3s ease;
+}
+
+.close-video:hover {
+    color: var(--ctp-lavender);
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@media (max-width: 768px) {
+    .container {
+        gap: 15px;
+        padding: 15px;
+        padding-bottom: 90px;
+    }
+    
+    .buttons {
+        flex-direction: column;
+        gap: 15px;
+    }
+    
+    .box {
+        width: min(280px, calc(100vw - 30px));
+        height: 120px;
+        font-size: 20px;
+        padding: 15px;
+    }
+    
+    h1 {
+        font-size: 28px;
+        padding: 8px 15px;
+        line-height: 1.3;
+    }
+    
+    .messaging-apps {
+        gap: 12px;
+        margin-bottom: 15px;
+    }
+    
+    .messaging-app {
+        width: 45px;
+        height: 45px;
+    }
+    
+    .messaging-app .icon {
+        width: 24px;
+        height: 24px;
+    }
+    
+    .messaging-app:hover {
+        width: 110px;
+    }
+    
+    .messaging-app:hover .icon {
+        transform: translateX(-20px);
+    }
+    
+    .messaging-app .label {
+        font-size: 12px;
+        right: 10px;
+    }
+    
+    .bottom-text {
+        bottom: 15px;
+        width: calc(100% - 20px);
+    }
+    
+    .bottom-text p {
+        font-size: 14px;
+        line-height: 1.4;
+        padding: 0 15px;
+    }
+    
+    .tooltip {
+        font-size: 12px;
+        padding: 6px 10px;
+        margin-bottom: 6px;
+    }
+    
+    .close-video {
+        font-size: 36px;
+        top: 15px;
+        right: 20px;
+    }
+    
+    .session-copied {
+        font-size: 14px;
+        padding: 12px 20px;
+        bottom: 25px;
+    }
+}
+
+@media (max-width: 480px) {
+    h1 {
+        font-size: 24px;
+        padding: 6px 12px;
+    }
+    
+    .box {
+        width: calc(100vw - 30px);
+        height: 100px;
+        font-size: 18px;
+        padding: 10px;
+    }
+    
+    .messaging-app:hover {
+        width: 100px;
+    }
+    
+    .messaging-app:hover .icon {
+        transform: translateX(-15px);
+    }
+    
+    .bottom-text p {
+        font-size: 13px;
+        padding: 0 10px;
+    }
+}
+  </style>
+</head>
+<body>
+
+  <canvas id="gridCanvas"></canvas>
+  <canvas id="snowCanvas"></canvas>
+
+  <div class="video-modal" id="videoModal">
+    <span class="close-video" id="closeVideo">&times;</span>
+    <video controls autoplay>
+      <source src="blue.webm" type="video/webm">
+      Blue Balls Blue Balls Blue Balls.
+    </video>
+  </div>
+
+  <div class="session-copied" id="sessionCopied">
+    Session ID copied to clipboard!
+  </div>
+
+  <div class="container">
+      <div class="header" data-aos="fade-up" id="headerText">
+          <h1>yz</h1>
+      </div>
+      
+      <div class="messaging-apps" data-aos="fade-up" data-aos-delay="600">
+          <a href="https://t.me/yzkitty" class="messaging-app telegram" title="Telegram" target="_blank">
+              <img src="te.png" alt="Telegram" class="icon" />
+              <span class="label">yzkitty</span>
+          </a>
+          <a href="https://signal.me/#eu/rqO3MUcA6eOdILd90rc9iXKlHeK-0Xm5mZoFJFMqWb872H_dhRROdqbTlcUtkPBu" class="messaging-app signal" title="Signal" target="_blank">
+              <img src="si.png" alt="Signal" class="icon" />
+              <span class="label">G59.01</span>
+          </a>
+          <div class="messaging-app session" title="Session" data-session-id="052caf869d7cdd3990ed4536250a182ae6c4a9c5d55a413bb4be1ca43571a05d0b">
+              <img src="se.png" alt="Session" class="icon" />
+              <span class="label">Click me</span>
+          </div>
+      </div>
+
+      <div class="buttons" data-aos="fade-up" data-aos-delay="900">
+          <a href="https://consumerrights.wiki/" class="box" target="_blank">consumer rights<br>wiki</a>
+          <a href="https://fightchatcontrol.eu/" class="box" target="_blank">fight chat<br>control</a>
+          <a href="https://privacyguides.org/" class="box" target="_blank">privacy<br>guides</a>
+          <a href="https://fmhy.net/" class="box" target="_blank">fmhy</a>
+      </div>
+  </div>
+
+  <div class="bottom-text">
+      <p id="randomText">Loading the blue balls...</p>
+      <span class="tooltip" id="tooltip"></span>
+  </div>
+
+  <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+  <script src="https://unpkg.com/cursor-effects@latest/dist/browser.js"></script>
+  <script>new cursoreffects.followingDotCursor({ color: ["#313244"] });</script>
+  <script>
+    AOS.init({
+      duration: 1200
+    });
+
+    (function() {
+      const grid = document.getElementById('gridCanvas');
+      const gctx = grid.getContext('2d');
+
+      const lineColor = '#313244';
+      const spacing = 65;
+      const minorSpacing = null;
+      let amplitude = Math.floor(Math.random() * 26) // 0 to 15 inclusive
+      console.log(`%cBackground Wave Animation Amplitude: ${amplitude}`, "color: #cdd6f4; font-size: 16px; font-weight: bold;")
+      const waveLength = 300;
+      const speed = 0.006;
+      const alpha = 1.0;
+
+      let w = 0, h = 0, dpr = 1
+      let t0 = performance.now()
+
+      function resize() {
+        dpr = window.devicePixelRatio || 1
+        w = Math.max(1, window.innerWidth)
+        h = Math.max(1, window.innerHeight)
+        grid.style.width = w + 'px'
+        grid.style.height = h + 'px'
+        grid.width = Math.round(w * dpr)
+        grid.height = Math.round(h * dpr)
+        gctx.setTransform(dpr, 0, 0, dpr, 0, 0)
+      }
+
+      function drawGrid(now) {
+        const time = now * speed
+        gctx.clearRect(0, 0, w, h)
+
+        gctx.lineWidth = 1
+        gctx.lineCap = 'round'
+        gctx.strokeStyle = lineColor
+        gctx.globalAlpha = alpha
+
+        function drawParallel(isVertical, spacingPx) {
+          if (!spacingPx) return
+          const count = Math.ceil((isVertical ? w : h) / spacingPx) + 2
+          for (let i = -1; i < count; i++) {
+            const base = i * spacingPx
+            gctx.beginPath()
+            const steps = Math.ceil((isVertical ? h : w) / 20)
+            for (let s = 0; s <= steps; s++) {
+              const pos = s / steps
+              const orth = pos * (isVertical ? h : w)
+              const phase = (orth / waveLength) * Math.PI * 2
+              const displacement = Math.sin(phase + base * 0.02 + time) * (amplitude * 0.6)
+                                 + Math.sin(phase * 0.5 + base * 0.011 + time * 0.7) * (amplitude * 0.35)
+              if (isVertical) {
+                const x = base + displacement
+                const y = orth
+                if (s === 0) gctx.moveTo(x, y)
+                else gctx.lineTo(x, y)
+              } else {
+                const x = orth
+                const y = base + displacement
+                if (s === 0) gctx.moveTo(x, y)
+                else gctx.lineTo(x, y)
+              }
+            }
+            gctx.stroke()
+          }
+        }
+
+        gctx.globalAlpha = 1.0
+        drawParallel(true, spacing)
+        drawParallel(false, spacing)
+
+        if (minorSpacing && minorSpacing < spacing) {
+          gctx.globalAlpha = 0.45
+          drawParallel(true, minorSpacing)
+          drawParallel(false, minorSpacing)
+        }
+
+        requestAnimationFrame(drawGrid)
+      }
+
+      resize()
+      window.addEventListener('resize', () => {
+        resize()
+      })
+
+      requestAnimationFrame(drawGrid)
+    })();
+
+    const canvas = document.getElementById('snowCanvas');
+    const ctx = canvas.getContext('2d');
+    function setupSnowCanvas() {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    }
+    setupSnowCanvas();
+
+    const snowflakes = [];
+    const snowflakeCount = 100;
+
+    function Snowflake() {
+      this.x = Math.random() * canvas.width;
+      this.y = Math.random() * canvas.height;
+      this.radius = Math.random() * 4 + 1;
+      this.speedY = Math.random() * 1 + 0.5;
+      this.opacity = Math.random() * 0.5 + 0.3;
+    }
+
+    Snowflake.prototype.draw = function() {
+      ctx.beginPath();
+      ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+      ctx.fillStyle = `rgba(225, 235, 255, ${this.opacity})`;
+      ctx.fill();
+      ctx.closePath();
+    };
+
+    Snowflake.prototype.update = function() {
+      this.y += this.speedY;
+      if (this.y > canvas.height) {
+        this.y = 0;
+        this.x = Math.random() * canvas.width;
+      }
+    };
+
+    function createSnowflakes() {
+      for (let i = 0; i < snowflakeCount; i++) {
+        snowflakes.push(new Snowflake());
+      }
+    }
+
+    function animateSnow() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      for (let i = 0; i < snowflakes.length; i++) {
+        snowflakes[i].draw();
+        snowflakes[i].update();
+      }
+      requestAnimationFrame(animateSnow);
+    }
+
+    window.addEventListener('resize', () => {
+      const gridCanvas = document.getElementById('gridCanvas');
+      gridCanvas.width = window.innerWidth * (window.devicePixelRatio || 1);
+      gridCanvas.height = window.innerHeight * (window.devicePixelRatio || 1);
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+      snowflakes.length = 0;
+      createSnowflakes();
+    });
+
+    createSnowflakes();
+    animateSnow();
+
+    const randomTexts = [
+      "do u meow do u purr do u really have fur",
+      "cant believe clouts such a drug yall do some shit for 50 likes",
+      "be gay, do crimes",
+      "yeah my balls are blue",
+      "pop a choccy milk",
+      "hi guys my name is taha",
+      "sorry cant help the intense love for boys",
+      "say gex",
+      "i HATE this BOMBASTIC shield.",
+      "Fag!",
+      "hi evade",
+      "im tired of broke g.",
+      "life if uhh, WOMEN, life when uhh when when WOMAN drive nono 🚫 life when MEN DRIVE, Ryan Gosling 🔥",
+      "round cat",
+      "meow meow woof woof",
+      "bugs are probably like instagram for cats",
+      "Wuh luh wuh does not excuse victuhm luh groomuh",
+      "Can i have 100 burgers please its for the homeless",
+      "Yes, I ask for people to censor personal information and just show date of birth alongside a note of their username.",
+      "i want solara help please",
+      "imma call him a good boy, it does things to him",
+      "gay 🤮, straight 🔥",
+      "so now my cat is angry",
+      "one thing about me is, i will be sleepy",
+      "Had a dream there was an emoji like 💯 except it was only 60. Some post said 'popeyes fries be tastin so good (60)' and i laughed so hard i woke myself up",
+      "the world is full of sudiful experiences awaiting you",
+      "ein suden pizzen bitte",
+      "sudo shot in czech o block",
+      "we gon slide on yo doas ass",
+      "purchase opsec?",
+      "I crashed into a family of 7",
+      "1080ti in my system, yuh",
+      "fully skidded",
+      "Iz it zopen zource?",
+      "Maybe gamers are calling eachother good girls by saying gg",
+      "please let evade rest",
+      "dms open :3 im a rly sub femboy <3 im bi but prefer girls >W< open for anything i like… nya :3",
+      'Ive had it up to here with this. Its not "gooning" its JACKING OFF!!! Its not "pay gorn" it is GAY!!!! PORNOGRAPHY!!!! NEVER be ashamed. Say it with your full chest. Take my hand.',
+      "y o u r l i f e r e v o l v e s a r o u n d g u n s l o l",
+      "i am a real alpha male and i like mediatek dimensity chips not snapdragon. Snapdragon are for femboys and twinks. Dimensity are the killers",
+      "I don't do international shipping I'm afraid",
+      "A cat curls up, soft and sweet, In sunlit spots where warmth does meet. A purr, a stretch, a gentle leap— In simple joy, he falls asleep.",
+      "why do websockets make the best therapists? they're always listening",
+      "Joe many libarels does it take to screw in a log b bub??? Their to busy????? Their gender 😂😂😂😂😂😂😂😂😂😂😂😂",
+      "Hey boss, Just letting you know i'm out of product",
+      "I require Windows's 7 Facebook edition 2012 download iso lplease",
+      "Within 7 business weeks you will find the bot watching your sleep too ...",
+      "I have a pixel 8A GrapheneOS. I Want to make it a Hardened phone. Not surveillance phone. Not a Tapped into phone. Not a Tracked phone. What to do my phone? How can I help with this?",
+      "Accept Jesus as your lord and saviour and get a free, milkable femboy! Click here ->",
+      "God damn it, I'm on another planet",
+      "It's strictly no photos, especially if they candid",
+      "Gayfemboy v2",
+      "@everyone i have given up and will kill myself in July 2027, sorry for being so pathetic, i hope things will get better after i die.",
+      "evil gay purple hatsune miku who wanna hop on something evil will happen",
+      "oh. ..so..ryz is my favorite character.. I'm not really comfortable sharing them with others because they means a lot to me. But it's okay if they are your favorite character too!!",
+      "If my mb/s are high my ping cant be high",
+      "doesnt exodus have high fees?",
+      "Lil bro you got 5 minutes.",
+      "gay gay five nine",
+      "hi, is this the emotional support channel? pyoncord died and i need a hug",
+      "palantir employee, flock investor",
+      "I love my bootloader, update time, I love my bootloader, where is my bootloader",
+      "we not from..",
+      "62+1=?"
+    ];
+
+    const randomIndex = Math.floor(Math.random() * randomTexts.length);
+    const randomText = randomTexts[randomIndex];
+    document.getElementById('randomText').textContent = randomText;
+    document.getElementById('tooltip').textContent = `[${randomIndex + 1}/${randomTexts.length}]`;
+    console.log("%c⚠️ SITE PROTECTED BY TEMPLEOS   ⚠️", "background: yellow; color: red; font-size: 32px; font-weight: bold;");
+    console.log("%cMeowers unite!", "color: #cdd6f4; font-size: 64px; font-weight: bold;");
+
+    const headerText = document.getElementById('headerText');
+    const videoModal = document.getElementById('videoModal');
+    const closeVideo = document.getElementById('closeVideo');
+    const video = videoModal.querySelector('video');
+
+    headerText.addEventListener('click', () => {
+      videoModal.classList.add('active');
+      console.log("%cBlue balls!", "background:#585b70; color: #cdd6f4; font-size: 96px; font-weight: bold;");
+      console.log("%coriginal: https://youtu.be/-W5FflN3MU0", "background:#585b70; color: #cdd6f4; font-size: 24px; font-weight: bold;");
+      
+      if (videoModal.requestFullscreen) {
+        videoModal.requestFullscreen();
+      } else if (videoModal.webkitRequestFullscreen) {
+        videoModal.webkitRequestFullscreen();
+      } else if (videoModal.msRequestFullscreen) {
+        videoModal.msRequestFullscreen();
+      }
+      
+      video.play();
+    });
+
+    const closeVideoAndExitFullscreen = () => {
+      videoModal.classList.remove('active');
+      video.pause();
+      video.currentTime = 0;
+      
+      if (document.exitFullscreen) {
+        document.exitFullscreen();
+      } else if (document.webkitExitFullscreen) {
+        document.webkitExitFullscreen();
+      } else if (document.msExitFullscreen) {
+        document.msExitFullscreen();
+      }
+    };
+
+    closeVideo.addEventListener('click', closeVideoAndExitFullscreen);
+
+    videoModal.addEventListener('click', (e) => {
+      if (e.target === videoModal) {
+        closeVideoAndExitFullscreen();
+      }
+    });
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && videoModal.classList.contains('active')) {
+        closeVideoAndExitFullscreen();
+      }
+    });
+
+    document.addEventListener('fullscreenchange', () => {
+      if (!document.fullscreenElement && videoModal.classList.contains('active')) {
+        videoModal.classList.remove('active');
+        video.pause();
+        video.currentTime = 0;
+      }
+    });
+
+    document.addEventListener('webkitfullscreenchange', () => {
+      if (!document.webkitFullscreenElement && videoModal.classList.contains('active')) {
+        videoModal.classList.remove('active');
+        video.pause();
+        video.currentTime = 0;
+      }
+    });
+
+    document.addEventListener('msfullscreenchange', () => {
+      if (!document.msFullscreenElement && videoModal.classList.contains('active')) {
+        videoModal.classList.remove('active');
+        video.pause();
+        video.currentTime = 0;
+      }
+    });
+
+    const sessionApp = document.querySelector('.messaging-app.session');
+    const sessionCopied = document.getElementById('sessionCopied');
+
+    sessionApp.addEventListener('click', async (e) => {
+      e.preventDefault();
+      const sessionId = sessionApp.getAttribute('data-session-id');
+      
+      try {
+        await navigator.clipboard.writeText(sessionId);
+        sessionCopied.classList.add('show');
+        
+        setTimeout(() => {
+          sessionCopied.classList.remove('show');
+        }, 2000);
+      } catch (err) {
+        const textArea = document.createElement('textarea');
+        textArea.value = sessionId;
+        document.body.appendChild(textArea);
+        textArea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textArea);
+        
+        sessionCopied.classList.add('show');
+        setTimeout(() => {
+          sessionCopied.classList.remove('show');
+        }, 2000);
+      }
+    });
+  </script>
+</body>
+</html>
