@@ -1190,24 +1190,10 @@ h1::before {
       }
     });
 
-    const sessionApp = document.querySelector('.messaging-app.session');
-    const sessionCopied = document.getElementById('sessionCopied');
-
-    sessionApp.addEventListener('click', () => {
-      const sessionId = sessionApp.getAttribute('data-session-id');
-      navigator.clipboard.writeText(sessionId).then(() => {
-        sessionCopied.classList.add('show');
-        setTimeout(() => {
-          sessionCopied.classList.remove('show');
-        }, 2000);
-      }).catch(err => {
-        console.error('Failed to copy: ', err);
-      });
-    });
 
 class MusicPlayer {
   constructor() {
-    // Get all DOM elements
+    // Get DOM elements
     this.audio = document.getElementById('audioPlayer');
     this.playBtn = document.getElementById('playBtn');
     this.prevBtn = document.getElementById('prevBtn');
@@ -1224,85 +1210,83 @@ class MusicPlayer {
     // Player state
     this.songs = [];
     this.currentIndex = 0;
-    this.playing = false;
+    this.isPlaying = false;
+    this.playHistory = [];
     this.shuffleHistory = [];
-    this.backHistory = [];
-    this.isLoading = false;
     
     this.initialize();
   }
 
   async initialize() {
-    // Show loading state
-    this.updateUI('Loading...', 'Please wait');
-    
-    // Load songs from JSON file
+    // Try to load from songs.json, fallback to embedded
     try {
       const response = await fetch('songs.json');
-      if (!response.ok) throw new Error(`HTTP ${response.status}`);
-      
-      const data = await response.json();
-      this.songs = Array.isArray(data) ? data : [];
-      
-      if (this.songs.length === 0) {
-        this.updateUI('No Music Found', 'Library is empty');
-        return;
+      if (response.ok) {
+        this.songs = await response.json();
+        console.log('Loaded', this.songs.length, 'songs from JSON file');
+      } else {
+        throw new Error('Failed to fetch songs.json');
       }
-      
-      // Load first random song
-      this.selectRandomSong();
-      
-    } catch (err) {
-      console.error('Music loading error:', err);
-      this.updateUI('Loading Failed', err.message || 'Cannot load music');
+    } catch (error) {
+      console.log('Using fallback embedded songs');
+      // Fallback embedded songs
+      this.songs = [
+        {
+          "src": "https://files.catbox.moe/8c3kyk.ogg",
+          "title": "antisocialclub",
+          "artist": "ulikevlone",
+          "coverArt": "https://files.catbox.moe/7pepac.jpg"
+        },
+        {
+          "src": "https://files.catbox.moe/01fu7g.ogg", 
+          "title": "In the end",
+          "artist": "ulikevlone, МУЛЬТ",
+          "coverArt": "https://files.catbox.moe/7pepac.jpg"
+        },
+        {
+          "src": "https://files.catbox.moe/oxocxj.ogg",
+          "title": "The Race", 
+          "artist": "Tay-K",
+          "coverArt": ""
+        }
+      ];
     }
     
-    this.bindEvents();
+    if (this.songs.length > 0) {
+      this.selectRandomSong();
+      this.setupEventListeners();
+    } else {
+      this.showError('No songs available', 'Library is empty');
+    }
   }
   
-  bindEvents() {
-    // Control button events
+  setupEventListeners() {
     this.playBtn.addEventListener('click', () => this.handlePlayPause());
     this.prevBtn.addEventListener('click', () => this.playPrevious());
     this.nextBtn.addEventListener('click', () => this.playNext());
     
-    // Audio events
-    this.audio.addEventListener('loadstart', () => this.isLoading = true);
-    this.audio.addEventListener('canplay', () => this.isLoading = false);
-    this.audio.addEventListener('timeupdate', () => this.updateProgressBar());
+    this.audio.addEventListener('timeupdate', () => this.updateProgress());
     this.audio.addEventListener('ended', () => this.playNext());
     this.audio.addEventListener('error', () => this.handleAudioError());
     
-    // Progress bar click
-    this.progressBar.addEventListener('click', (event) => this.seekToPosition(event));
+    this.progressBar.addEventListener('click', (e) => this.seekToPosition(e));
   }
   
   selectRandomSong() {
-    if (this.songs.length === 0) return;
-    
-    const randomIdx = Math.floor(Math.random() * this.songs.length);
-    this.currentIndex = randomIdx;
-    this.shuffleHistory.push(randomIdx);
+    const randomIndex = Math.floor(Math.random() * this.songs.length);
+    this.currentIndex = randomIndex;
+    this.shuffleHistory.push(randomIndex);
     this.loadCurrentSong();
   }
   
   loadCurrentSong() {
-    if (!this.songs[this.currentIndex]) return;
+    const song = this.songs[this.currentIndex];
+    if (!song) return;
     
-    const track = this.songs[this.currentIndex];
-    
-    // Update audio source
-    this.audio.src = track.src;
+    this.audio.src = song.src;
+    this.updateUI(song.title, song.artist);
+    this.updateCoverArt(song.coverArt);
     this.audio.load();
-    
-    // Update UI
-    this.updateUI(track.title, track.artist);
-    this.updateCoverArt(track.coverArt);
-    
-    // Auto-play if currently playing
-    if (this.playing && audioContextEnabled) {
-      this.startPlayback();
-    }
   }
   
   updateUI(title, artist) {
@@ -1316,7 +1300,6 @@ class MusicPlayer {
       this.coverArt.style.display = 'block';
       this.coverPlaceholder.style.display = 'none';
       
-      // Handle image load errors
       this.coverArt.onerror = () => {
         this.coverArt.style.display = 'none';
         this.coverPlaceholder.style.display = 'block';
@@ -1333,71 +1316,70 @@ class MusicPlayer {
       return;
     }
     
-    if (this.playing) {
-      this.pausePlayback();
+    if (this.isPlaying) {
+      this.pause();
     } else {
-      this.startPlayback();
+      this.play();
     }
   }
   
-  async startPlayback() {
-    if (this.isLoading) return;
-    
+  async play() {
     try {
       await this.audio.play();
-      this.playing = true;
+      this.isPlaying = true;
       this.playBtn.textContent = '⏸';
     } catch (error) {
-      console.error('Playback error:', error);
+      console.error('Play failed:', error);
       this.handleAudioError();
     }
   }
   
-  pausePlayback() {
+  pause() {
     this.audio.pause();
-    this.playing = false;
+    this.isPlaying = false;
     this.playBtn.textContent = '▶';
   }
   
   playNext() {
     if (this.songs.length <= 1) return;
     
-    // Get unplayed songs
+    // Get songs not in shuffle history
     const played = new Set(this.shuffleHistory);
     const available = this.songs
       .map((_, i) => i)
       .filter(i => !played.has(i));
     
-    // Reset if all songs played
+    // Reset if all played
     if (available.length === 0) {
       this.shuffleHistory = [];
       available.push(...this.songs.map((_, i) => i));
     }
     
-    // Select random from available
-    const nextIdx = available[Math.floor(Math.random() * available.length)];
+    // Pick random from available
+    const nextIndex = available[Math.floor(Math.random() * available.length)];
     
-    // Update history
-    this.backHistory.push(this.currentIndex);
-    this.shuffleHistory.push(nextIdx);
-    this.currentIndex = nextIdx;
+    this.playHistory.push(this.currentIndex);
+    this.shuffleHistory.push(nextIndex);
+    this.currentIndex = nextIndex;
     
     this.loadCurrentSong();
+    if (this.isPlaying) this.play();
   }
   
   playPrevious() {
-    if (this.backHistory.length === 0) return;
+    if (this.playHistory.length === 0) return;
     
-    const prevIdx = this.backHistory.pop();
-    this.currentIndex = prevIdx;
+    const prevIndex = this.playHistory.pop();
+    this.currentIndex = prevIndex;
     
     // Remove from shuffle history
-    const historyIdx = this.shuffleHistory.indexOf(prevIdx);
+    const historyIdx = this.shuffleHistory.indexOf(prevIndex);
     if (historyIdx > -1) {
       this.shuffleHistory.splice(historyIdx, 1);
     }
     
     this.loadCurrentSong();
+    if (this.isPlaying) this.play();
   }
   
   seekToPosition(event) {
@@ -1410,14 +1392,12 @@ class MusicPlayer {
     this.audio.currentTime = percentage * this.audio.duration;
   }
   
-  updateProgressBar() {
+  updateProgress() {
     if (!this.audio.duration) return;
     
-    // Update progress bar
     const progress = (this.audio.currentTime / this.audio.duration) * 100;
     this.progressFill.style.width = `${progress}%`;
     
-    // Update time displays
     this.currentTimeEl.textContent = this.formatTime(this.audio.currentTime);
     this.durationEl.textContent = this.formatTime(this.audio.duration);
   }
@@ -1431,14 +1411,25 @@ class MusicPlayer {
   }
   
   handleAudioError() {
-    console.error('Audio playback failed');
-    this.updateUI('Playback Error', 'Failed to load audio');
-    this.playing = false;
+    console.error('Audio error occurred');
+    this.showError('Playback Error', 'Failed to load audio');
+  }
+  
+  showError(title, message) {
+    this.updateUI(title, message);
+    this.isPlaying = false;
     this.playBtn.textContent = '▶';
   }
+  
+  // Compatibility method for external calls
+  togglePlay() {
+    this.handlePlayPause();
+  }
 }
+
+// Initialize the player
+const musicPlayer = new MusicPlayer();
   </script>
 </body>
 
 </html>
-
