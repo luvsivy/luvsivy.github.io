@@ -1205,187 +1205,240 @@ h1::before {
       });
     });
 
-    class MusicPlayer {
-      constructor() {
-        this.audio = document.getElementById('audioPlayer');
-        this.playBtn = document.getElementById('playBtn');
-        this.prevBtn = document.getElementById('prevBtn');
-        this.nextBtn = document.getElementById('nextBtn');
-        this.progressBar = document.getElementById('progressBar');
-        this.progressFill = document.getElementById('progressFill');
-        this.currentTimeEl = document.getElementById('currentTime');
-        this.durationEl = document.getElementById('duration');
-        this.songTitle = document.getElementById('songTitle');
-        this.songArtist = document.getElementById('songArtist');
-        this.coverArt = document.getElementById('coverArt');
-        this.coverPlaceholder = document.getElementById('coverPlaceholder');
-        
-        this.songs = [];
-        this.currentSongIndex = 0;
-        this.isPlaying = false;
-        this.playedSongs = [];
-        this.playHistory = [];
-        
-        this.init();
-      }
+class MusicPlayer {
+  constructor() {
+    // Get all DOM elements
+    this.audio = document.getElementById('audioPlayer');
+    this.playBtn = document.getElementById('playBtn');
+    this.prevBtn = document.getElementById('prevBtn');
+    this.nextBtn = document.getElementById('nextBtn');
+    this.progressBar = document.getElementById('progressBar');
+    this.progressFill = document.getElementById('progressFill');
+    this.currentTimeEl = document.getElementById('currentTime');
+    this.durationEl = document.getElementById('duration');
+    this.songTitle = document.getElementById('songTitle');
+    this.songArtist = document.getElementById('songArtist');
+    this.coverArt = document.getElementById('coverArt');
+    this.coverPlaceholder = document.getElementById('coverPlaceholder');
+    
+    // Player state
+    this.songs = [];
+    this.currentIndex = 0;
+    this.playing = false;
+    this.shuffleHistory = [];
+    this.backHistory = [];
+    this.isLoading = false;
+    
+    this.initialize();
+  }
 
-    async init() {
-        try {
-            const response = await fetch('songs.json');
-            this.songs = await response.json();
-            
-            if (this.songs.length > 0) {
-                this.loadRandomSong();
-            } else {
-                this.songTitle.textContent = 'No songs available';
-                this.songArtist.textContent = '';
-            }
-        } catch (error) {
-            console.error('Failed to load songs:', error);
-            this.songTitle.textContent = 'Failed to load songs';
-            this.songArtist.textContent = '';
-        }
-        
-        this.setupEventListeners();
+  async initialize() {
+    // Show loading state
+    this.updateUI('Loading...', 'Please wait');
+    
+    // Load songs from JSON file
+    try {
+      const response = await fetch('songs.json');
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      
+      const data = await response.json();
+      this.songs = Array.isArray(data) ? data : [];
+      
+      if (this.songs.length === 0) {
+        this.updateUI('No Music Found', 'Library is empty');
+        return;
+      }
+      
+      // Load first random song
+      this.selectRandomSong();
+      
+    } catch (err) {
+      console.error('Music loading error:', err);
+      this.updateUI('Loading Failed', err.message || 'Cannot load music');
     }
     
-    loadRandomSong() {
-        if (this.songs.length === 0) return;
-        
-        const randomIndex = Math.floor(Math.random() * this.songs.length);
-        this.playedSongs.push(randomIndex);
-        this.playHistory.push(randomIndex);
-        this.loadSong(randomIndex);
+    this.bindEvents();
+  }
+  
+  bindEvents() {
+    // Control button events
+    this.playBtn.addEventListener('click', () => this.handlePlayPause());
+    this.prevBtn.addEventListener('click', () => this.playPrevious());
+    this.nextBtn.addEventListener('click', () => this.playNext());
+    
+    // Audio events
+    this.audio.addEventListener('loadstart', () => this.isLoading = true);
+    this.audio.addEventListener('canplay', () => this.isLoading = false);
+    this.audio.addEventListener('timeupdate', () => this.updateProgressBar());
+    this.audio.addEventListener('ended', () => this.playNext());
+    this.audio.addEventListener('error', () => this.handleAudioError());
+    
+    // Progress bar click
+    this.progressBar.addEventListener('click', (event) => this.seekToPosition(event));
+  }
+  
+  selectRandomSong() {
+    if (this.songs.length === 0) return;
+    
+    const randomIdx = Math.floor(Math.random() * this.songs.length);
+    this.currentIndex = randomIdx;
+    this.shuffleHistory.push(randomIdx);
+    this.loadCurrentSong();
+  }
+  
+  loadCurrentSong() {
+    if (!this.songs[this.currentIndex]) return;
+    
+    const track = this.songs[this.currentIndex];
+    
+    // Update audio source
+    this.audio.src = track.src;
+    this.audio.load();
+    
+    // Update UI
+    this.updateUI(track.title, track.artist);
+    this.updateCoverArt(track.coverArt);
+    
+    // Auto-play if currently playing
+    if (this.playing && audioContextEnabled) {
+      this.startPlayback();
     }
+  }
+  
+  updateUI(title, artist) {
+    this.songTitle.textContent = title || 'Unknown Title';
+    this.songArtist.textContent = artist || 'Unknown Artist';
+  }
+  
+  updateCoverArt(coverUrl) {
+    if (coverUrl && coverUrl.trim()) {
+      this.coverArt.src = coverUrl;
+      this.coverArt.style.display = 'block';
+      this.coverPlaceholder.style.display = 'none';
       
-      setupEventListeners() {
-        this.playBtn.addEventListener('click', () => this.togglePlay());
-        this.prevBtn.addEventListener('click', () => this.prevSong());
-        this.nextBtn.addEventListener('click', () => this.nextSong());
-        
-        this.audio.addEventListener('timeupdate', () => this.updateProgress());
-        this.audio.addEventListener('ended', () => this.nextSong());
-        
-        this.progressBar.addEventListener('click', (e) => {
-          const rect = this.progressBar.getBoundingClientRect();
-          const clickX = e.clientX - rect.left;
-          const width = rect.width;
-          const duration = this.audio.duration;
-          
-          if (duration && !isNaN(duration)) {
-            this.audio.currentTime = (clickX / width) * duration;
-          }
-        });
-      }
-      
-      loadSong(index) {
-        if (this.songs.length === 0) return;
-        
-        this.currentSongIndex = index;
-        const song = this.songs[index];
-        
-        this.audio.src = song.src;
-        this.songTitle.textContent = song.title;
-        this.songArtist.textContent = song.artist;
-        
-        if (song.coverArt) {
-          this.coverArt.src = song.coverArt;
-          this.coverArt.style.display = 'block';
-          this.coverPlaceholder.style.display = 'none';
-        } else {
-          this.coverArt.style.display = 'none';
-          this.coverPlaceholder.style.display = 'block';
-        }
-        
-        this.audio.load();
-        
-        if (this.isPlaying) {
-          this.playSong();
-        }
-      }
-      
-      togglePlay() {
-        if (!audioContextEnabled) {
-          clickPrompt.click();
-          return;
-        }
-        
-        if (this.isPlaying) {
-          this.pauseSong();
-        } else {
-          this.playSong();
-        }
-      }
-      
-      playSong() {
-        this.audio.play()
-          .then(() => {
-            this.isPlaying = true;
-            this.playBtn.textContent = '⏸';
-          })
-          .catch(error => {
-            console.error('Playback failed:', error);
-          });
-      }
-      
-      pauseSong() {
-        this.audio.pause();
-        this.isPlaying = false;
-        this.playBtn.textContent = '▶';
-      }
-      
-      prevSong() {
-        if (this.playHistory.length <= 1) {
-          return;
-        }
-        
-        this.playHistory.pop();
-        const prevIndex = this.playHistory[this.playHistory.length - 1];
-        this.loadSong(prevIndex);
-        if (this.isPlaying) {
-          this.playSong();
-        }
-      }
-      
-      nextSong() {
-        if (this.songs.length === 0) return;
-        
-        let availableSongs = this.songs.map((_, index) => index)
-          .filter(index => !this.playedSongs.includes(index));
-        
-        if (availableSongs.length === 0) {
-          this.playedSongs = [];
-          availableSongs = this.songs.map((_, index) => index);
-        }
-        
-        const randomIndex = availableSongs[Math.floor(Math.random() * availableSongs.length)];
-        this.playedSongs.push(randomIndex);
-        this.playHistory.push(randomIndex);
-        
-        this.loadSong(randomIndex);
-        if (this.isPlaying) {
-          this.playSong();
-        }
-      }
-      
-      updateProgress() {
-        if (this.audio.duration) {
-          const progressPercent = (this.audio.currentTime / this.audio.duration) * 100;
-          this.progressFill.style.width = `${progressPercent}%`;
-          
-          const currentMinutes = Math.floor(this.audio.currentTime / 60);
-          const currentSeconds = Math.floor(this.audio.currentTime % 60);
-          this.currentTimeEl.textContent = `${currentMinutes}:${currentSeconds < 10 ? '0' : ''}${currentSeconds}`;
-          
-          const durationMinutes = Math.floor(this.audio.duration / 60);
-          const durationSeconds = Math.floor(this.audio.duration % 60);
-          this.durationEl.textContent = `${durationMinutes}:${durationSeconds < 10 ? '0' : ''}${durationSeconds}`;
-        }
-      }
+      // Handle image load errors
+      this.coverArt.onerror = () => {
+        this.coverArt.style.display = 'none';
+        this.coverPlaceholder.style.display = 'block';
+      };
+    } else {
+      this.coverArt.style.display = 'none';
+      this.coverPlaceholder.style.display = 'block';
     }
-
-    const musicPlayer = new MusicPlayer();
+  }
+  
+  handlePlayPause() {
+    if (!audioContextEnabled) {
+      clickPrompt.click();
+      return;
+    }
+    
+    if (this.playing) {
+      this.pausePlayback();
+    } else {
+      this.startPlayback();
+    }
+  }
+  
+  async startPlayback() {
+    if (this.isLoading) return;
+    
+    try {
+      await this.audio.play();
+      this.playing = true;
+      this.playBtn.textContent = '⏸';
+    } catch (error) {
+      console.error('Playback error:', error);
+      this.handleAudioError();
+    }
+  }
+  
+  pausePlayback() {
+    this.audio.pause();
+    this.playing = false;
+    this.playBtn.textContent = '▶';
+  }
+  
+  playNext() {
+    if (this.songs.length <= 1) return;
+    
+    // Get unplayed songs
+    const played = new Set(this.shuffleHistory);
+    const available = this.songs
+      .map((_, i) => i)
+      .filter(i => !played.has(i));
+    
+    // Reset if all songs played
+    if (available.length === 0) {
+      this.shuffleHistory = [];
+      available.push(...this.songs.map((_, i) => i));
+    }
+    
+    // Select random from available
+    const nextIdx = available[Math.floor(Math.random() * available.length)];
+    
+    // Update history
+    this.backHistory.push(this.currentIndex);
+    this.shuffleHistory.push(nextIdx);
+    this.currentIndex = nextIdx;
+    
+    this.loadCurrentSong();
+  }
+  
+  playPrevious() {
+    if (this.backHistory.length === 0) return;
+    
+    const prevIdx = this.backHistory.pop();
+    this.currentIndex = prevIdx;
+    
+    // Remove from shuffle history
+    const historyIdx = this.shuffleHistory.indexOf(prevIdx);
+    if (historyIdx > -1) {
+      this.shuffleHistory.splice(historyIdx, 1);
+    }
+    
+    this.loadCurrentSong();
+  }
+  
+  seekToPosition(event) {
+    if (!this.audio.duration) return;
+    
+    const rect = this.progressBar.getBoundingClientRect();
+    const clickX = event.clientX - rect.left;
+    const percentage = Math.max(0, Math.min(1, clickX / rect.width));
+    
+    this.audio.currentTime = percentage * this.audio.duration;
+  }
+  
+  updateProgressBar() {
+    if (!this.audio.duration) return;
+    
+    // Update progress bar
+    const progress = (this.audio.currentTime / this.audio.duration) * 100;
+    this.progressFill.style.width = `${progress}%`;
+    
+    // Update time displays
+    this.currentTimeEl.textContent = this.formatTime(this.audio.currentTime);
+    this.durationEl.textContent = this.formatTime(this.audio.duration);
+  }
+  
+  formatTime(seconds) {
+    if (isNaN(seconds)) return '0:00';
+    
+    const mins = Math.floor(seconds / 60);
+    const secs = Math.floor(seconds % 60);
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
+  }
+  
+  handleAudioError() {
+    console.error('Audio playback failed');
+    this.updateUI('Playback Error', 'Failed to load audio');
+    this.playing = false;
+    this.playBtn.textContent = '▶';
+  }
+}
   </script>
 </body>
 
 </html>
+
